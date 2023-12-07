@@ -1,0 +1,71 @@
+close all, clear all, clc
+
+x = 0.1:1/22:1;
+d = ((1 + 0.6*sin(2*pi*x/0.7)) + (0.3*sin(2*pi*x)))/2;
+
+% RBF parametrai (pasirinkti ranka)
+c1 = 0.19; % pirmojo RBF centras
+r1 = 0.15; % pirmojo RBF plotis
+c2 = 0.9;  % antrojo RBF centras
+r2 = 0.15; % antrojo RBF plotis
+
+% mokymo zingsnis
+eta = 0.01;
+
+% svoriai isejimo sluoksniui
+w_A2 = rand(1);
+w_B2 = rand(1);
+
+b_2 = rand(1);
+
+% kiek kartu leisti mokyma
+num_epochs = 1000;
+
+% Mokymo ciklas
+for epoch = 1:num_epochs
+    for i = 1:length(x) % Dirbama su kiekvienu 
+        % RBF funkcijos pirmame sluoksnyje
+        y_A = exp(-(x(i) - c1)^2 / (2 * r1^2));
+        y_B = exp(-(x(i) - c2)^2 / (2 * r2^2));
+        
+        % Pasverta suma isejiimo sluoksnyje
+        y_2 = w_A2*y_A + w_B2*y_B + b_2;
+        
+        % Palyginti su norimu atsaku ir apskaiciuoti klaida
+        e = d(i) - y_2;
+        delta_2 = e; % Isejimo sluoksnio gradientas
+        
+        % Atnaujinti svorius isejimo sluoksnyje
+        w_A2 = w_A2 + eta * delta_2 * y_A;
+        w_B2 = w_B2 + eta * delta_2 * y_B;
+        
+        b_2 = b_2 + eta * delta_2; % Isejimo bias atnauijinimas
+    end
+end
+
+% Testuojam su naujo tikslumo duomenimis
+x_test = 0.05:0.01:1.05; % New input data for testing
+d_test = ((1 + 0.6*sin(2*pi*x_test/0.7)) + (0.3*sin(2*pi*x_test)))/2;
+
+y_2_test = zeros(size(x_test));
+
+for i = 1:length(x_test)
+    % RBF funkcijos pasleptajame sluoksnyje
+    y_A = exp(-(x_test(i) - c1)^2 / (2 * r1^2));
+    y_B = exp(-(x_test(i) - c2)^2 / (2 * r2^2));
+    
+    % Pasvertoji suma isejimo sluoksnyje
+    y_2_test(i) = w_A2*y_A + w_B2*y_B + b_2;
+end
+
+% Visualize the results
+figure;
+plot(x, d, 'b-', 'LineWidth', 2, 'DisplayName', 'Training Data');
+hold on;
+plot(x_test, d_test, 'g-', 'LineWidth', 2, 'DisplayName', 'Testing Data');
+plot(x_test, y_2_test, 'r--', 'LineWidth', 2, 'DisplayName', 'Predicted Output (Testing)');
+title('RBF Network Approximation Results');
+xlabel('Input (x)');
+ylabel('Output');
+legend('show');
+grid on;
